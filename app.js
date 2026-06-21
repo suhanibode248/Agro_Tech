@@ -1,12 +1,14 @@
 // ===================== CONFIG =====================
 let OPENROUTER_API_KEY = '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';
-let AI_MODEL = 'meta-llama/llama-3.1-8b-instruct';
+
+// ✅ UPDATED — verified working June 2026
+let AI_MODEL = 'meta-llama/llama-4-scout:free';
 const AI_MODEL_FALLBACKS = [
+  'meta-llama/llama-4-maverick:free',
   'meta-llama/llama-3.3-70b-instruct:free',
-  'meta-llama/llama-3.1-8b-instruct:free',
-  'mistralai/mistral-7b-instruct:free',
-  'qwen/qwen-2.5-7b-instruct:free',
-  'google/gemma-3-4b-it:free'
+  'qwen/qwen3-235b-a22b:free',
+  'nvidia/llama-3.3-nemotron-super-49b-v1:free',
+  'openrouter/free'
 ];
 
 // ===================== SAFE LOCALSTORAGE =====================
