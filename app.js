@@ -1,6 +1,5 @@
 // ===================== CONFIG =====================
-let OPENROUTER_API_KEY = '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';
-
+let OPENROUTER_API_KEY = 'sk-or-v1-YOUR-NEW-KEY-HERE';
 // ✅ UPDATED — verified working June 2026
 let AI_MODEL = 'meta-llama/llama-4-scout:free';
 const AI_MODEL_FALLBACKS = [
