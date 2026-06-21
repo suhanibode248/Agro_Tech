@@ -1,14 +1,12 @@
 // ===================== CONFIG =====================
-// NOTE: the OpenRouter API key now lives ONLY in Vercel's environment variables and is read
-// server-side by /api/ai.js — it is never present in this file, which is public in the browser.
-// Free model IDs on OpenRouter get renamed/retired every few months (calling a stale one
-// returns 404). 'openrouter/free' is OpenRouter's own auto-router — it always points at
-// whichever free model is currently live, so this list doesn't need constant upkeep.
-let AI_MODEL = 'openrouter/free';
+let OPENROUTER_API_KEY = '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';
+let AI_MODEL = 'meta-llama/llama-3.1-8b-instruct';
 const AI_MODEL_FALLBACKS = [
   'meta-llama/llama-3.3-70b-instruct:free',
+  'meta-llama/llama-3.1-8b-instruct:free',
+  'mistralai/mistral-7b-instruct:free',
   'qwen/qwen-2.5-7b-instruct:free',
-  'deepseek/deepseek-r1:free'
+  'google/gemma-3-4b-it:free'
 ];
 
 // ===================== SAFE LOCALSTORAGE =====================
@@ -167,17 +165,20 @@ window.clearAllNotifs = function(){ NOTIF_STORE.length=0; saveNotifs(); updateNo
 window.clickNotif = function(id){ const n=NOTIF_STORE.find(x=>x.id===id); if(!n)return; n.read=true; saveNotifs(); updateNotifBadge(); document.getElementById('notif-panel').style.display='none'; if(n.action)showPage(n.action); };
 
 // ===================== AI CALL =====================
-// Calls our own /api/ai serverless function (see api/ai.js) instead of OpenRouter directly —
-// this keeps the real API key server-side only, never exposed in this browser-loaded file.
 async function callAI(prompt, systemPrompt='') {
+  if (!OPENROUTER_API_KEY||OPENROUTER_API_KEY==='YOUR_OPENROUTER_API_KEY')
+    return '⚠️ Add your OpenRouter API key at the top of app.js.';
+  const msgs = [];
+  if (systemPrompt) msgs.push({role:'system',content:systemPrompt});
+  msgs.push({role:'user',content:prompt});
   const models = [AI_MODEL, ...AI_MODEL_FALLBACKS.filter(m=>m!==AI_MODEL)];
   let lastErr = '';
   for (const model of models) {
     try {
-      const res = await fetch('/api/ai', {
+      const res = await fetch('https://openrouter.ai/api/v1/chat/completions',{
         method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({prompt, systemPrompt, model})
+        headers:{'Content-Type':'application/json','Authorization':`Bearer ${OPENROUTER_API_KEY}`,'HTTP-Referer':window.location.href,'X-Title':'KrishiOS'},
+        body:JSON.stringify({model,messages:msgs,max_tokens:800})
       });
       if (!res.ok) { const e=await res.json().catch(()=>({})); lastErr=`Error ${res.status}: ${e?.error?.message||res.statusText}`; if(res.status===404||res.status===429)continue; return lastErr; }
       const data = await res.json();
@@ -409,17 +410,6 @@ window.confirmPurchase=function(crop,farmerName,amount,qty,price,knownFarmerId){
   }
 };
 
-// Safely turn any order id (string 'ORD-169...' or a legacy/corrupted numeric id left over
-// from older data) into a millisecond timestamp for the recent-duplicate check below.
-// Numbers don't have .replace — calling it directly on a non-string id threw
-// "(p.id || "").replace is not a function" and aborted the whole request before it was ever sent.
-function orderIdToTimestamp(id){
-  const idStr = typeof id === 'string' ? id : String(id==null?'':id);
-  const digits = idStr.replace('ORD-','');
-  const ts = parseInt(digits, 10);
-  return isNaN(ts) ? null : ts;
-}
-
 function confirmPurchaseInner(crop,farmerName,amount,qty,price,knownFarmerId){
   let user=null; try{ user=JSON.parse(safeLS.get('kio_user','null')); }catch(e){}
   if(!user){
@@ -440,10 +430,15 @@ function confirmPurchaseInner(crop,farmerName,amount,qty,price,knownFarmerId){
   // crop/qty/price was created in the last 10 seconds, don't create a second one.
   let existingPurchases=[]; try{ existingPurchases=JSON.parse(safeLS.get('kio_purchases','[]')); }catch(e){}
   const dupe=existingPurchases.find(p=>{
-    const ts=orderIdToTimestamp(p.id);
+    // FIX: p.id can be a number (e.g. when a record was created by the saveToFirestore
+    // fallback using Date.now(), or from older/legacy localStorage data) rather than the
+    // expected 'ORD-<timestamp>' string. Calling .replace() directly on a number throws
+    // "p.id.replace is not a function". String(p.id||'') guarantees a string in all cases
+    // (number, undefined, null, or already-a-string) before .replace() is called.
+    const ts=parseInt(String(p.id||'').replace('ORD-',''));
     return p.buyerId===user.uid && p.farmerName===farmerName && p.crop===crop &&
       p.qty==qty && p.price==price && p.amount===amount &&
-      p.status==='Pending Farmer Confirmation' && ts!==null && (Date.now()-ts)<10000;
+      p.status==='Pending Farmer Confirmation' && !isNaN(ts) && (Date.now()-ts)<10000;
   });
   if(dupe){
     document.getElementById('order-request-modal')?.remove();
