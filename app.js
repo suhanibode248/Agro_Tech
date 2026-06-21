@@ -1,13 +1,14 @@
 // ===================== CONFIG =====================
 // NOTE: the OpenRouter API key now lives ONLY in Vercel's environment variables and is read
 // server-side by /api/ai.js — it is never present in this file, which is public in the browser.
-let AI_MODEL = 'meta-llama/llama-3.1-8b-instruct';
+// Free model IDs on OpenRouter get renamed/retired every few months (calling a stale one
+// returns 404). 'openrouter/free' is OpenRouter's own auto-router — it always points at
+// whichever free model is currently live, so this list doesn't need constant upkeep.
+let AI_MODEL = 'openrouter/free';
 const AI_MODEL_FALLBACKS = [
   'meta-llama/llama-3.3-70b-instruct:free',
-  'meta-llama/llama-3.1-8b-instruct:free',
-  'mistralai/mistral-7b-instruct:free',
   'qwen/qwen-2.5-7b-instruct:free',
-  'google/gemma-3-4b-it:free'
+  'deepseek/deepseek-r1:free'
 ];
 
 // ===================== SAFE LOCALSTORAGE =====================
