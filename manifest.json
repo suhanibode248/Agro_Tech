@@ -1,0 +1,16 @@
+{
+  "name": "KrishiOS — AI Agricultural OS",
+  "short_name": "KrishiOS",
+  "description": "AI-powered agricultural operating system for Indian farmers",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#0d1f16",
+  "theme_color": "#1a4731",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='16' fill='%232d6a4f'/%3E%3Ctext x='50' y='68' font-size='58' text-anchor='middle'%3E%F0%9F%8C%BE%3C/text%3E%3C/svg%3E", "sizes": "192x192", "type": "image/svg+xml" },
+    { "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='16' fill='%232d6a4f'/%3E%3Ctext x='50' y='68' font-size='58' text-anchor='middle'%3E%F0%9F%8C%BE%3C/text%3E%3C/svg%3E", "sizes": "512x512", "type": "image/svg+xml" }
+  ],
+  "categories": ["agriculture", "productivity", "finance"],
+  "lang": "en-IN"
+}
