@@ -7,11 +7,11 @@ try {
   OPENROUTER_API_KEY = savedKey || defaultKey;
 } catch(e) {}
 
-let AI_MODEL = 'meta-llama/llama-3.3-70b-instruct:free';
+let AI_MODEL = 'google/gemma-3-4b-it';
 const AI_MODEL_FALLBACKS = [
-  'meta-llama/llama-3.2-3b-instruct:free',
-  'nousresearch/hermes-3-llama-3.1-405b:free',
-  'openrouter/free'
+  'qwen/qwen3-coder:free',
+  'meta-llama/llama-3.3-70b-instruct:free',
+  'openrouter/auto'
 ];
 
 // ===================== SAFE LOCALSTORAGE =====================
@@ -192,6 +192,9 @@ async function callAI(prompt, systemPrompt='') {
       if (!res.ok) {
         const e=await res.json().catch(()=>({}));
         lastErr=`Error ${res.status}: ${e?.error?.message||res.statusText}`;
+        if (res.status===401) {
+          return '⚠️ API Key invalid or expired. Please click "⚙️ Key" in the topbar to enter your own OpenRouter API key.';
+        }
         // Fallback on rate limit (429), not found (404), timeout (408), and server errors (5xx)
         if (res.status===404 || res.status===429 || res.status===408 || (res.status>=500 && res.status<=599)) {
           console.warn(`Model ${model} failed with status ${res.status}. Falling back...`);
