@@ -1573,7 +1573,17 @@ function renderWeather(){
     </div>
   </div>`;
 }
-async function getWeatherAdvice(){ const div=document.getElementById('weather-ai-advice'); div.innerHTML='<div class="ai-thinking"><div class="loading-dots"><span></span><span></span><span></span></div></div>'; const r=await callAI(`Weather: Temp ${WEATHER.current.temp}°C, Humidity ${WEATHER.current.humidity}%, 70% rain tomorrow. Farmer grows Soybean and Cotton in Maharashtra. Give 5 specific farm actions for today and this week.`); div.innerHTML=`<div style="white-space:pre-wrap;font-size:0.87rem;color:var(--text2);line-height:1.6;margin-top:12px">${r}</div>`; }
+async function getWeatherAdvice(){ 
+  const div=document.getElementById('weather-ai-advice'); 
+  div.innerHTML='<div class="ai-thinking"><div class="loading-dots"><span></span><span></span><span></span></div> AI generating advice...</div>'; 
+  const r=await callAI(`Weather: Temp ${WEATHER.current.temp}°C, Humidity ${WEATHER.current.humidity}%. 70% rain tomorrow. Soybean & Cotton farm in Maharashtra. Provide exactly 5 specific farm actions.\nRespond ONLY in JSON format:\n{"actions":[{"title":"Short Action Name","timeframe":"Today or This Week","desc":"Detailed description"}], "summary":"Short 1 sentence overall advice"}`); 
+  try {
+    const d=JSON.parse(r.replace(/```json|```/g,'').trim());
+    div.innerHTML=`<div style="margin-top:16px"><div style="font-weight:600;margin-bottom:12px;color:var(--green-light)">💡 ${d.summary}</div>` + d.actions.map(a=>`<div style="background:var(--bg3);border-radius:8px;padding:12px;margin-bottom:10px;border-left:4px solid var(--sky)"><div class="flex-between" style="margin-bottom:6px"><span style="font-weight:600">${a.title}</span><span class="badge badge-sky">${a.timeframe}</span></div><div style="font-size:0.85rem;color:var(--text2)">${a.desc}</div></div>`).join('') + `</div>`;
+  } catch(e) {
+    div.innerHTML=`<div style="white-space:pre-wrap;font-size:0.87rem;color:var(--text2);line-height:1.6;margin-top:12px">${r}</div>`; 
+  }
+}
 window.getWeatherAdvice=getWeatherAdvice;
 
 // ===================== PRICE INTEL =====================
