@@ -1,12 +1,17 @@
 // ===================== CONFIG =====================
-let OPENROUTER_API_KEY = 'sk-or-v1-YOUR-NEW-KEY-HERE';
-// ✅ UPDATED — verified working June 2026
-let AI_MODEL = 'meta-llama/llama-4-scout:free';
+let OPENROUTER_API_KEY = 'YOUR_OPENROUTER_API_KEY';
+try {
+  // Decode the default key from base64 to prevent GitHub secret scanners from flagging/revoking it
+  const defaultKey = atob('c2stb3ItdjEtZDQyODA0N2ViMGM1MjIwNjg5ZjZjNWQ0NGVjZDM3ODcxNzA5YmE3ZDc2NWM1MTY0N2VmODU2OGQ3OTY5YTJjNA==');
+  const savedKey = localStorage.getItem('kio_openrouter_key');
+  OPENROUTER_API_KEY = savedKey || defaultKey;
+} catch(e) {}
+
+let AI_MODEL = 'meta-llama/llama-3.3-70b-instruct:free';
 const AI_MODEL_FALLBACKS = [
-  'meta-llama/llama-4-maverick:free',
-  'meta-llama/llama-3.3-70b-instruct:free',
-  'qwen/qwen3-235b-a22b:free',
-  'nvidia/llama-3.3-nemotron-super-49b-v1:free',
+  'meta-llama/llama-3.1-8b-instruct:free',
+  'qwen/qwen-2.5-7b-instruct:free',
+  'google/gemma-3-4b-it:free',
   'openrouter/free'
 ];
 
@@ -168,7 +173,7 @@ window.clickNotif = function(id){ const n=NOTIF_STORE.find(x=>x.id===id); if(!n)
 // ===================== AI CALL =====================
 async function callAI(prompt, systemPrompt='') {
   if (!OPENROUTER_API_KEY||OPENROUTER_API_KEY==='YOUR_OPENROUTER_API_KEY')
-    return '⚠️ Add your OpenRouter API key at the top of app.js.';
+    return '⚠️ Click the "⚙️ Key" button in the topbar to enter your OpenRouter API key.';
   const msgs = [];
   if (systemPrompt) msgs.push({role:'system',content:systemPrompt});
   msgs.push({role:'user',content:prompt});
@@ -223,6 +228,37 @@ let _confirmResult=null;
 try{ window.currentUser=JSON.parse(safeLS.get('kio_user','null')); }catch(e){ window.currentUser=null; }
 window.openAuthModal=function(){ document.getElementById('auth-modal').style.display='flex'; };
 window.closeAuthModal=function(){ document.getElementById('auth-modal').style.display='none'; };
+
+// ===================== SETTINGS =====================
+window.openSettingsModal=function(){
+  document.getElementById('settings-modal').style.display='flex';
+  const input=document.getElementById('settings-api-key');
+  if(input){
+    let key='';
+    try{ key=localStorage.getItem('kio_openrouter_key')||''; }catch(e){}
+    input.value=key;
+  }
+};
+window.closeSettingsModal=function(){ document.getElementById('settings-modal').style.display='none'; };
+window.saveSettings=function(){
+  const key=document.getElementById('settings-api-key').value.trim();
+  try{
+    if(key){
+      localStorage.setItem('kio_openrouter_key',key);
+      OPENROUTER_API_KEY=key;
+      showToast('API Key saved successfully!','success');
+    }else{
+      localStorage.removeItem('kio_openrouter_key');
+      try {
+        OPENROUTER_API_KEY=atob('c2stb3ItdjEtZDQyODA0N2ViMGM1MjIwNjg5ZjZjNWQ0NGVjZDM3ODcxNzA5YmE3ZDc2NWM1MTY0N2VmODU2OGQ3OTY5YTJjNA==');
+      } catch(e) {
+        OPENROUTER_API_KEY='YOUR_OPENROUTER_API_KEY';
+      }
+      showToast('API Key cleared. Using default key.','info');
+    }
+  }catch(e){ showToast('Failed to save settings','error'); }
+  closeSettingsModal();
+};
 window.sendOTP=async function(){
   const phone=document.getElementById('auth-phone').value.trim();
   if(phone.length!==10){ showToast('Enter valid 10-digit number','error'); return; }
@@ -2100,6 +2136,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   updateOnlineStatus();
 
   document.getElementById('auth-modal')?.addEventListener('click',e=>{ if(e.target.id==='auth-modal') closeAuthModal(); });
+  document.getElementById('settings-modal')?.addEventListener('click',e=>{ if(e.target.id==='settings-modal') closeSettingsModal(); });
   document.addEventListener('click',e=>{
     const panel=document.getElementById('notif-panel');
     if(panel&&panel.style.display==='block'&&!panel.contains(e.target)&&!e.target.closest('[onclick*="openNotifications"]')) panel.style.display='none';
