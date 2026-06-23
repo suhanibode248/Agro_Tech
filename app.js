@@ -180,17 +180,48 @@ async function callAI(prompt, systemPrompt='') {
   const models = [AI_MODEL, ...AI_MODEL_FALLBACKS.filter(m=>m!==AI_MODEL)];
   let lastErr = '';
   for (const model of models) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000); // 8-second timeout
     try {
       const res = await fetch('https://openrouter.ai/api/v1/chat/completions',{
         method:'POST',
         headers:{'Content-Type':'application/json','Authorization':`Bearer ${OPENROUTER_API_KEY}`,'HTTP-Referer':window.location.href,'X-Title':'KrishiOS'},
-        body:JSON.stringify({model,messages:msgs,max_tokens:800})
+        body:JSON.stringify({model,messages:msgs,max_tokens:800}),
+        signal: controller.signal
       });
-      if (!res.ok) { const e=await res.json().catch(()=>({})); lastErr=`Error ${res.status}: ${e?.error?.message||res.statusText}`; if(res.status===404||res.status===429)continue; return lastErr; }
+      clearTimeout(timeoutId);
+      if (!res.ok) {
+        const e=await res.json().catch(()=>({}));
+        lastErr=`Error ${res.status}: ${e?.error?.message||res.statusText}`;
+        // Fallback on rate limit (429), not found (404), timeout (408), and server errors (5xx)
+        if (res.status===404 || res.status===429 || res.status===408 || (res.status>=500 && res.status<=599)) {
+          console.warn(`Model ${model} failed with status ${res.status}. Falling back...`);
+          continue;
+        }
+        return lastErr;
+      }
       const data = await res.json();
-      const text = data.choices?.[0]?.message?.content?.trim();
-      if (text) return text;
-    } catch(e) { lastErr=`AI Error: ${e.message}`; }
+      let text = data.choices?.[0]?.message?.content?.trim();
+      if (text) {
+        // If it looks like a JSON block, clean it up
+        if (text.includes('{') && text.includes('}')) {
+          const start = text.indexOf('{');
+          const end = text.lastIndexOf('}');
+          if (start !== -1 && end > start) {
+            const possibleJson = text.substring(start, end + 1);
+            try {
+              JSON.parse(possibleJson); // verify it's valid JSON
+              text = possibleJson; // if valid, use it
+            } catch(e) {}
+          }
+        }
+        return text;
+      }
+    } catch(e) {
+      clearTimeout(timeoutId);
+      lastErr = e.name === 'AbortError' ? 'Request timed out (8s)' : `AI Error: ${e.message}`;
+      console.warn(`Model ${model} request failed: ${lastErr}. Falling back...`);
+    }
   }
   return `⚠️ All AI models failed. Last: ${lastErr}`;
 }
