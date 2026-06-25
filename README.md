@@ -1,3 +1,10 @@
+## Live Demo
+
+🔗 **Deployment Link:** [Click Here to View Project]()
+
+You can access and test the complete working project using the live deployment link above.
+----
+
 # KrishiOS: AI Agricultural Operating System for Smallholder Farmers
 
 **Author(s):** [Suhani Bode]  
