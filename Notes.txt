@@ -47,5 +47,5 @@ User Input → Data Processing → AI Analysis → Local Storage/API → Results
 Suhani Bode
 
 10. PROJECT LINK
-GitHub []
+GitHub [https://github.com/suhanibode248/Agro_Tech.git]
 Deployment Link []
