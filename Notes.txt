@@ -48,4 +48,4 @@ Suhani Bode
 
 10. PROJECT LINK
 GitHub [https://github.com/suhanibode248/Agro_Tech.git]
-Deployment Link []
+Deployment Link [https://agro-tech-chi.vercel.app/]
